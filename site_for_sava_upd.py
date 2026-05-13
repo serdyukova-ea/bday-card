@@ -29,6 +29,7 @@ st.markdown("""
         background-color: white !important;
         background: white !important;
     }
+    
 
     /* Основной текст делаем черным и центрируем */
     h1, p {
@@ -147,8 +148,52 @@ with col_centr:
 
 # 6. Интерактив
 st.divider()
+
+if "button_clicked" not in st.session_state:
+    st.session_state.button_clicked = False
+
 if st.button("Нажми, чтобы загадать желание"):
     st.balloons()
-    # Вызываем мишку через правильный st_lottie
-    st_lottie(lottie_bear, height=300, key="bear_button")
+    st.session_state.button_clicked = True
+
+if st.session_state.button_clicked:
+    st_lottie(lottie_bear, height=300, key="button_bear")
     st.success("Пусть все твои мечты сбываются!✨")
+
+# 7. Музыкальное сопровождение (ЖЕЛЕЗОБЕТОННЫЙ ВАРИАНТ)
+# Загружаем файл музыки и кодируем его в Base64
+with open("hb.mp3", "rb") as f:
+    audio_bytes = f.read()
+audio_b64 = __import__("base64").b64encode(audio_bytes).decode()
+
+# Вставляем скрытый от Streamlit HTML-плеер, который не перезапускается
+st.components.v1.html(
+    f"""
+    <div style="display: flex; justify-content: center; background: transparent; padding-top: 10px;">
+        <audio id="bg-audio" controls loop autoplay style="width: 100%; max-width: 500px;">
+            <source src="data:audio/mp3;base64,{audio_b64}" type="audio/mp3">
+        </audio>
+    </div>
+    <script>
+        // Код принудительно сохраняет позицию звука при обновлении страницы
+        var audio = document.getElementById("bg-audio");
+
+        // Восстанавливаем время проигрывания после перезагрузки
+        var savedTime = localStorage.getItem("audioTime");
+        if (savedTime) {{
+            audio.currentTime = parseFloat(savedTime);
+        }}
+
+        // Каждую секунду запоминаем, где сейчас играет музыка
+        setInterval(function() {{
+            localStorage.setItem("audioTime", audio.currentTime);
+        }}, 500);
+
+        // Пытаемся включить звук при любом клике по сайту (снятие блока автоплея)
+        window.parent.document.addEventListener('click', function() {{
+            audio.play();
+        }}, {{ once: true }});
+    </script>
+    """,
+    height=60
+)
